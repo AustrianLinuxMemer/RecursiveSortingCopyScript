@@ -6,4 +6,4 @@ As i tried to copy my music collection onto my MP3 player, i stumbled across a b
 
 # Dependencies
 
-This script requires the ´´´ffprobe´´´ utility of the ´´´ffmpeg´´´ library
+This script requires the `ffprobe` utility of the `ffmpeg` library
