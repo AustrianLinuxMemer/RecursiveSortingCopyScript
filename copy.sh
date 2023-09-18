@@ -1,6 +1,24 @@
 #!/bin/bash
 filecount=0
 completed=0
+
+# List of dependencies
+dependencies=("ffprobe" "cp" "mkdir" "basename" "grep")
+
+# Function to check if a command is available
+check_dependency() {
+    local command="$1"
+    if ! command -v "$command" &> /dev/null; then
+        echo "$command is not installed. Please install it to use this script."
+        exit 1
+    fi
+}
+
+# Check each dependency
+for dependency in "${dependencies[@]}"; do
+    check_dependency "$dependency"
+done
+
 count_files() {
     local src="$1"
     # Use a for loop to iterate over the items in the directory
