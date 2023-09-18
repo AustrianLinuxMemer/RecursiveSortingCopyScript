@@ -9,4 +9,4 @@ As i tried to copy my music collection onto my MP3 player, i stumbled across a b
 This script requires the `ffprobe` utility of the `ffmpeg` library
 It also expects that POSIX-standard tools and the `bash` shell are present.
 
-Should a dependency be missing, then the script will give you an error message along the lines of "<command> is not installed. Please install it to use this script.".
+Should a dependency be missing, then the script will give you an error message along the lines of "\<command\> is not installed. Please install it to use this script.".
