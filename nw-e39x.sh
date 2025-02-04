@@ -1,9 +1,10 @@
 #!/bin/bash
 filecount=0
 completed=0
-# 0 -> ALWAYS, 1 -> ERROR, 2 -> WARNING, 3 -> INFO, 4 -> VERBOSE
-set_log_level="1"
-mode="a"
+# 0 -> SILENT, 1 -> ERROR, 2 -> WARNING, 3 -> INFO, 4 -> VERBOSE
+set_log_level=""
+mode=""
+exclude_non_music=""
 allowed_mimes=("audio/mp3" "audio/x-mp3" "audio/aac" "audio/x-aac" "audio/m4a" "audio/x-m4a" "video/mp4" "video/x-mp4" "audio/x-ms-wma" "audio/x-wav" "audio/wav" "audio/mpeg")
 # List of dependencies
 dependencies=("mediainfo" "cp" "mkdir" "basename")
@@ -135,6 +136,9 @@ copy_directory() {
     local unsortedFiles=()
     local dirs=()
     # Populate the arrays "sortedFiles" "unsortedFiles" and "dirs"
+    if [[ "$mode" == "w" ]]; then   
+        rm -rf "$dest"
+    fi
     mkdir -p "$dest"
     for item in "$src"/*
     do
@@ -162,11 +166,11 @@ copy_directory() {
     do
         if [ -f "$item" ]; then
             completed=$((completed+1))
-            log "Copying $(basename "$item") ($completed/$filecount)" 3
+            log "Copying $(basename "$item") ($completed/$filecount)" 1 
             if [[ "$mode" == "r" ]]; then
                 cp "$item" "$dest/"
             else            
-                cp -n "$item" "$dest/"
+                cp --update=none "$item" "$dest/"
             fi
         elif [ -d "$item" ]; then
             subdirectory_name=$(basename "$item")
@@ -175,7 +179,7 @@ copy_directory() {
     done
 }
 usage() {
-    log "usage: $0 <source> <target> [-a|-r|-w] [-i] [-v ALWAYS | ERROR | WARNING | VERBOSE]" 0
+    log "usage: $0 <source> <target> [-a|-r|-w] [-i] [-v SILENT | ERROR | WARNING | VERBOSE]"
 }
 missing_origin() {
     log "missing origin" 1
@@ -184,15 +188,43 @@ missing_destination() {
     log "missing destination" 1
 }
 wrong_log_level() {
-    log "log level must be 0, 1, 2 or 3" 1
+    log "log level must be SILENT, ERROR, WARNING, INFO or VERBOSE" 1
+}
+set_the_log_level() {
+    log_string="$1"
+    case $log_string in
+        "SILENT")
+            set_log_level="0"
+            ;;
+        "ERROR")
+            set_log_level="1"
+            ;;
+        "WARNING")
+            set_log_level="2"
+            ;;
+        "INFO")
+            set_log_level="3"
+            ;;
+        "VERBOSE")
+            set_log_level="4"
+            ;;
+        "")
+            set_log_level="1"
+            ;;
+        *)
+            wrong_log_level
+            exit 1
+            ;;
+    esac
 }
 if [[ "$1" == "-h" || "$1" == "--help" || "$1" == "-?" ]]; then
     usage
     exit 0
 fi
+script_name="$0"
 origin="$1"
 destination="$2"
-exclude_non_music="true"
+
 if [[ -z $origin ]]; then
     missing_origin
     exit 1
@@ -201,78 +233,84 @@ if [[ -z $destination ]]; then
     missing_destination
     exit 1
 fi
-case $3 in
-    "-a")
+
+parse_dynamic_args() {
+    mode=""
+    exclude_non_music=""
+    set_log_level=""
+    script_name="$0"
+    origin="$1"
+    destination="$2"
+    shift 2
+    if [[ -z "$origin" ]]; then
+        echo "origin must be present"
+        exit 1
+    fi
+    if [[ -z "$destination" ]]; then
+        echo "Destination must be present"
+        exit 1
+    fi
+    while [[ $# -gt 0 ]]; do
+        arg="$1"
+        if [[ -z "$mode" ]]; then
+            case "$arg" in
+                "-a")
+                    mode="a"
+                    ;;
+                "-r")
+                    mode="r"
+                    ;;
+                "-w")
+                    mode="w"
+                    ;;
+                *)
+                    echo "usage"
+                    exit 2
+                    ;;
+            esac    
+        fi
+        if [[ -z "$exclude_non_music" ]]; then
+            if [[ "$arg" == "-i" ]]; then
+                exclude_non_music="true"        
+            fi    
+        fi
+        if [[ -z "$set_log_level" ]]; then
+            if [[ "$arg" == "-v" ]]; then
+                set_the_log_level "$2"        
+            fi    
+        fi
+        shift 1
+    done
+    if [[ -z "$mode" ]]; then
         mode="a"
-        ;;
-    "-r")
-        mode="r"
-        ;;
-    "-w")
-        mode="w"
-        ;;
-    "-i")
+    fi
+    if [[ -z "$exclude_non_music" ]]; then
         exclude_non_music="false"
-        ;;
-    "-v")
-        set_log_level="$4"
-        ;;
-    "")
-        ;;
-    *)
-        usage
-        exit 1
-        ;;
-esac
-case $4 in
-    "-i")
-        exclude_non_music="false"
-        ;;
-    "-v")
-        set_log_level="$5"
-        ;;
-    "")
-        ;;
-    *)
-        usage
-        exit 1
-        ;;
-esac
-case $5 in
-    "-v")
-        set_log_level="$6"
-        ;;
-    "")
-        ;;
-    *)
-        usage
-        exit 1
-        ;;
-esac
-log "Mode: $mode" 4
-log "Exclude: $exclude_non_music" 4
-log "Verbosity $set_log_level" 4
+    fi
+    if [[ -z "$log_level" ]]; then
+        set_the_log_level "1"
+    fi
+}
+
 count_files "$origin" "$exclude_non_music"
 read -p "Do you want to copy $filecount files? (y/n): " answer
 if [[ "$answer" != "y" ]]; then
-    log "Operation canceled." 1
+    log "Operation canceled."
     exit 0
 fi
 if [[ "$mode" == "w" ]]; then
-    read -p "Are you sure you want to wipe $destination?\n
-            This action will delete everything in that directory and cannot be reversed. (y/n): " answer
+    read -p "Are you sure you want to wipe $destination?
+This action will delete everything in that directory and cannot be reversed. (y/n): " answer
     if [[ "$answer" != "y" ]]; then
-        log "Operation canceled." 1
+        log "Operation canceled."
         exit 0
-    else
-        rm -rf "$origin/*"
     fi
 fi
 if [[ "$mode" == "r" ]]; then
-    read -p "Are you sure you want to replace files in $destination?\n
-            This action cannot be reversed. (y/n): " answer
+    read -p "Are you sure you want to replace files in $destination?
+This action cannot be reversed. (y/n): " answer
     if [[ "$answer" != "y" ]]; then
-        log "Operation canceled." 1
+        log "Operation canceled."
         exit 0
     fi
 fi
