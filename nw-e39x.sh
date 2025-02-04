@@ -104,14 +104,13 @@ get_track_number() {
 # counting up the files
 count_files() {
     local src="$1"
-    local exclude_non_music="$2"
     # Use a for loop to iterate over the items in the directory
     for item in "$src"/*
     do
         if [ -f "$item" ]; then
-            if [[ $exclude_non_music == "false" ]]; then
+            if [[ $exclude_non_music == "true" ]]; then
                 filecount=$((filecount+1))
-            else
+            elif [[ $exclude_non_music == "false" ]]; then
                 get_track_number "$item" "q"
                 status=$?
                 if [[ $status -eq 0 ]]; then
@@ -119,6 +118,9 @@ count_files() {
                 else
                     error_codes "$status" 2 "$item"
                 fi
+            else
+                log "$exclude_non_music: must be either 'true' or 'false'"
+                return 1
             fi
         elif [ -d "$item" ]; then
             count_files "$item" "$include_non_music"
@@ -131,7 +133,6 @@ copy_directory() {
     # Setting up Variables
     local src="$1"
     local dest="$2"
-    local exclude_non_music="$3"
     local sortedFiles=()
     local unsortedFiles=()
     local dirs=()
@@ -228,11 +229,17 @@ parse_dynamic_args() {
     destination="$2"
     shift 2
     if [[ -z "$origin" ]]; then
-        echo "origin must be present"
+        log "origin must be present"
+        exit 1
+    elif [[ ! -d "$origin" || ! -f "$origin" ]]; then
+        log "$origin: Does not exist"
         exit 1
     fi
     if [[ -z "$destination" ]]; then
-        echo "Destination must be present"
+        log "Destination must be present"
+        exit 1
+    elif [[ ! -d "$destination" || ! -f "$destination" ]]; then
+        log "$destination: Does not exist"
         exit 1
     fi
     while [[ $# -gt 0 ]]; do
@@ -296,11 +303,11 @@ This action cannot be reversed. (y/n): " answer
         exit 0
     fi
 fi
-count_files "$origin" "$exclude_non_music"
+count_files "$origin"
 read -p "Do you want to copy $filecount files? (y/n): " answer
 if [[ "$answer" != "y" ]]; then
     log "Operation canceled."
     exit 0
 fi
 
-copy_directory "$origin" "$destination" "$exclude_non_music"
+copy_directory "$origin" "$destination"
