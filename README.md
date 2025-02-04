@@ -11,3 +11,17 @@ This script requires the `mediainfo` command
 It also expects that POSIX-standard tools and the `bash` shell are present.
 
 Should a dependency be missing, then the script will give you an error message along the lines of "\<command\> is not installed. Please install it to use this script.".
+
+# Usage
+
+`usage: nw-E39x.sh <source> <target> [-a|-r|-w] [-i] [-v SILENT | ERROR | WARNING | VERBOSE]`
+
+`-a`: **A**ppend the files in the destination (default)
+`-r`: **R**eplace the files in the destination
+`-w`: **W**ipe the destination
+
+`-i`: **I**nclude non-music files (Optional)
+
+`-v SILENT | ERROR | WARNING | VERBOSE`: Sets the **V**erbosity of the script (default: ERROR)
+
+Beware that the use of `-i` can take up an significant time to sum up all files that will be copied
