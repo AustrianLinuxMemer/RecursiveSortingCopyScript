@@ -222,23 +222,8 @@ if [[ "$1" == "-h" || "$1" == "--help" || "$1" == "-?" ]]; then
     exit 0
 fi
 script_name="$0"
-origin="$1"
-destination="$2"
-
-if [[ -z $origin ]]; then
-    missing_origin
-    exit 1
-fi
-if [[ -z $destination ]]; then
-    missing_destination
-    exit 1
-fi
 
 parse_dynamic_args() {
-    mode=""
-    exclude_non_music=""
-    set_log_level=""
-    script_name="$0"
     origin="$1"
     destination="$2"
     shift 2
@@ -264,8 +249,7 @@ parse_dynamic_args() {
                     mode="w"
                     ;;
                 *)
-                    echo "usage"
-                    exit 2
+                    mode="a"
                     ;;
             esac    
         fi
@@ -287,17 +271,15 @@ parse_dynamic_args() {
     if [[ -z "$exclude_non_music" ]]; then
         exclude_non_music="false"
     fi
-    if [[ -z "$log_level" ]]; then
-        set_the_log_level "1"
+    if [[ -z "$set_log_level" ]]; then
+        set_the_log_level "ERROR"
     fi
 }
+parse_dynamic_args "$@"
+log "Mode: $mode" 3
+log "Exclude: $exclude_non_music" 3
+log "Log Level: $set_log_level" 3
 
-count_files "$origin" "$exclude_non_music"
-read -p "Do you want to copy $filecount files? (y/n): " answer
-if [[ "$answer" != "y" ]]; then
-    log "Operation canceled."
-    exit 0
-fi
 if [[ "$mode" == "w" ]]; then
     read -p "Are you sure you want to wipe $destination?
 This action will delete everything in that directory and cannot be reversed. (y/n): " answer
@@ -314,4 +296,11 @@ This action cannot be reversed. (y/n): " answer
         exit 0
     fi
 fi
+count_files "$origin" "$exclude_non_music"
+read -p "Do you want to copy $filecount files? (y/n): " answer
+if [[ "$answer" != "y" ]]; then
+    log "Operation canceled."
+    exit 0
+fi
+
 copy_directory "$origin" "$destination" "$exclude_non_music"
