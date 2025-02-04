@@ -24,4 +24,4 @@ Should a dependency be missing, then the script will give you an error message a
 
 - `-v SILENT | ERROR | WARNING | VERBOSE`: Sets the **V**erbosity of the script (default: ERROR)
 
-Beware that the use of `-i` can take up an significant time to sum up all files that will be copied
+Beware that the ommission of `-i` can take up an significant time to sum up all files that will be copied
