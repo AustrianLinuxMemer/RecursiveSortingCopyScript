@@ -16,12 +16,12 @@ Should a dependency be missing, then the script will give you an error message a
 
 `usage: nw-E39x.sh <source> <target> [-a|-r|-w] [-i] [-v SILENT | ERROR | WARNING | VERBOSE]`
 
-`-a`: **A**ppend the files in the destination (default)
-`-r`: **R**eplace the files in the destination
-`-w`: **W**ipe the destination
+- `-a`: **A**ppend the files in the destination (default)
+- `-r`: **R**eplace the files in the destination
+- `-w`: **W**ipe the destination
 
-`-i`: **I**nclude non-music files (Optional)
+- `-i`: **I**nclude non-music files (Optional)
 
-`-v SILENT | ERROR | WARNING | VERBOSE`: Sets the **V**erbosity of the script (default: ERROR)
+- `-v SILENT | ERROR | WARNING | VERBOSE`: Sets the **V**erbosity of the script (default: ERROR)
 
 Beware that the use of `-i` can take up an significant time to sum up all files that will be copied
